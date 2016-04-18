@@ -7,26 +7,22 @@
 #include <cmath>
 #include <QTextStream>
 #include <QObject>
+// All neccessary files included
 
 // BufferSize: maximum bytes that can be stored
-char buffer[BufferSize];
+char buffer[BufferSize]; // Buffer is required
 int Josh;
 int milk;
 int user_temperature;
-int plotvalue;
+int plotvalue; // All global variables used here
 
-QSemaphore freeBytes(BufferSize);
-QSemaphore usedBytes;
+QSemaphore freeBytes(BufferSize); // Buffer checks
+QSemaphore usedBytes; // Buffer checks
 
-//ConProdDialog::ConProdDialog(QWidget *parent) :
-//    QDialog(parent),
-//    ui(new Ui::ConProdDialog)
-//{
-//}
 
-ConProdDialog::ConProdDialog() : plot( QString("Tea") ), usertemp(10), actualtemp(15), usermilk(0)
+ConProdDialog::ConProdDialog() : plot( QString("Tea") ), usertemp(10), actualtemp(15), usermilk(0) // Values needed in this thread
 {
-    this->setStyleSheet("background-color: white;");
+    this->setStyleSheet("background-color: white;"); // Want a white background
 
     // set up the gain knob
     knob.setValue(usertemp);
@@ -34,11 +30,10 @@ ConProdDialog::ConProdDialog() : plot( QString("Tea") ), usertemp(10), actualtem
     knob.setKnobWidth(200);
     knob.setFont( QFont("verdana", 14) );
     knob.setMarkerSize(10);
-//    knob.setScale(20, 30, 40, 50, 60, 70, 80, 90, 100);
-
+    // knob set up values, incl title markers, etc
 
     // use the Qt signals/slots framework to update the gain -
-    // every time the knob is moved, the setGain function will be called
+    // every time the knob is moved, the settemp function will be called
     connect( &knob, SIGNAL(valueChanged(double)), SLOT(settemp(double)) );
 
     // set up the gain knob
@@ -47,13 +42,14 @@ ConProdDialog::ConProdDialog() : plot( QString("Tea") ), usertemp(10), actualtem
     knob2.setKnobWidth(200);
     knob2.setFont( QFont("verdana", 14) );
     knob2.setMarkerSize(10);
+    //second knob set up for use with user milk selection
 
     // use the Qt signals/slots framework to update the gain -
-    // every time the knob is moved, the setGain function will be called
+    // every time the knob is moved, the setmilk function will be called
     connect( &knob2, SIGNAL(valueChanged(double)), SLOT(setmilk(double)) );
 
 
-    // set up the initial plot data
+    // set up the initial plot data with two curves on it
     for( int index=0; index<plotDataSize; ++index )
     {
         x1[index] = index;
@@ -62,7 +58,7 @@ ConProdDialog::ConProdDialog() : plot( QString("Tea") ), usertemp(10), actualtem
         y2[index] = actualtemp;
     }
 
-    // make a plot curve from the data and attach it to the plot
+    // make a plot curve from the first and second data and attach it to the plot
     curve1.setSamples(x1, y1, plotDataSize);
     curve1.setPen(* new QPen(Qt::red));
     curve1.attach(&plot);
@@ -70,7 +66,7 @@ ConProdDialog::ConProdDialog() : plot( QString("Tea") ), usertemp(10), actualtem
     curve2.setPen(* new QPen(Qt::black));
     curve2.attach(&plot);
 
-    plot.setAxisScale(QwtPlot::yLeft,0,100,10);
+    plot.setAxisScale(QwtPlot::yLeft,0,100,10); // Set plot limits
     plot.replot();
     plot.show();
 
@@ -90,36 +86,37 @@ ConProdDialog::ConProdDialog() : plot( QString("Tea") ), usertemp(10), actualtem
     mConsumer = new Consumer(this);
     moutput_program = new output_program(this);
 
+    // Start threads
     mProducer->start();
     mConsumer->start();
     moutput_program->start();
 
 }
 
-void ConProdDialog::timerEvent( QTimerEvent * )
+void ConProdDialog::timerEvent( QTimerEvent * ) // Called as the timer event for the plot
 {
 
-    double knobVal = usertemp;
-    double knob2Val = usermilk;
+    double knobVal = usertemp; // Giving knob its correct value
+    double knob2Val = usermilk; // Giving knob its correct value
 
     user_temperature = knobVal;
     milk = knob2Val;
 
-    if (Josh != 0 ){
+    if (Josh != 0 ){ // If there is a new value, use it!
         //qDebug() << "Update Graph - next line is Josh value";
         plotvalue = (((((-0.000000000024463 * Josh) + 0.000001536757) * Josh) - 0.0350361) * Josh ) + 344.65;
-        Josh = (((((-0.000000000024463 * Josh) + 0.000001536757) * Josh) - 0.0350361) * Josh ) + 344.65;
+        Josh = (((((-0.000000000024463 * Josh) + 0.000001536757) * Josh) - 0.0350361) * Josh ) + 344.65; // From calibration, setting correct values from ADC
 //        qDebug() << user_temperature;
-//        qDebug() << milk;
+//        qDebug() << milk; // Prints for debugging
         memmove( y2, y2+1, (plotDataSize-1) * sizeof(double) );
         y2[plotDataSize-1] = plotvalue	;
-        curve2.setSamples(x2, y2, plotDataSize);
+        curve2.setSamples(x2, y2, plotDataSize); // Update plot
         plot.replot();
-        Josh = 0;
+        Josh = 0; // Can be filled with new number
         // add the new input to the plot
        memmove( y1, y1+1, (plotDataSize-1) * sizeof(double) );
        y1[plotDataSize-1] = knobVal;
-       curve1.setSamples(x1, y1, plotDataSize);
+       curve1.setSamples(x1, y1, plotDataSize); // Update second plot line
        plot.replot();
 
     }
