@@ -15,6 +15,7 @@
 #include <QtGui>
 #include <QSlider>
 #include <QBoxLayout>
+// Include all QT plotting 
 
 
 namespace Ui {
@@ -30,13 +31,13 @@ public:
 
 //    ~ConProdDialog();
     
-    void timerEvent( QTimerEvent * );
+    void timerEvent( QTimerEvent * ); // timer event
 
 //    explicit ConProdDialog(QWidget *parent = 0);
 //    ~ConProdDialog();
 
 public slots:
-    void settemp(double usertemp);
+    void settemp(double usertemp); // gain functions
     void setmilk(double usermilk);
 
 private slots:
@@ -45,9 +46,9 @@ private slots:
 private:
 //    Ui::ConProdDialog *ui;
     Producer *mProducer;
-    Consumer *mConsumer;
+    Consumer *mConsumer; // ring buffer input output
     output_program *moutput_program;
-    // graphical elements from the Qwt library - http://qwt.sourceforge.net/annotated.html
+    // graphical elements from the Qwt library
       QwtKnob      knob;
       QwtKnob      knob2;
       QwtPlot      plot;
@@ -55,7 +56,7 @@ private:
       QwtPlotCurve curve2;
       QwtSlider *slider;
 
-      // layout elements from Qt itself http://qt-project.org/doc/qt-4.8/classes.html
+      // layout elements from Qt itself
       QVBoxLayout  vLayout;  // vertical layout
       QHBoxLayout  hLayout;  // horizontal layout
 
@@ -67,6 +68,7 @@ private:
       double x2[plotDataSize];
       double y2[plotDataSize];
 
+      // user values
       double usertemp;
       double actualtemp;
       double usermilk;
