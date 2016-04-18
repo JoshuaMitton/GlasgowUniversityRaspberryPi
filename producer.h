@@ -28,7 +28,7 @@ public:
     // thread functions
     void quit();
 
-protected:
+protected: // functions used
     void writeReset(int fd);
     void writeReg(int fd, uint8_t v);
     uint8_t readReg(int fd);
