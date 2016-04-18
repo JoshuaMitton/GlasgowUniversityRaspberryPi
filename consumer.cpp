@@ -8,6 +8,7 @@ Consumer::Consumer(QObject *parent) :
 {
 }
 
+// Function for getting data out of buffer
 void Consumer::run()
 {
     int value;
