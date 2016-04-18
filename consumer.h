@@ -12,7 +12,7 @@ public:
     explicit Consumer(QObject *parent = 0);
     void run();
 
-signals:
+signals: // Signal decleration for buffer consumer
     //void stringConsumed(const QString &text);
     void bufferFillCountChanged(int cCount);
     void consumerCountChanged(int count);
