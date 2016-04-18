@@ -8,8 +8,8 @@ class output_program : public QThread
 {
     Q_OBJECT
 public:
-    explicit output_program(QObject *parent = 0);
-    void run();
+    explicit output_program(QObject *parent = 0); // initialization
+    void run(); // function for running
 
 signals:
 
