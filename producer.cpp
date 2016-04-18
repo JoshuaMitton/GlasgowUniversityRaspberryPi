@@ -8,11 +8,12 @@
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
 #include <assert.h>
+// All includes needed for storing to ring buffer using Qt
 
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
-#define MAX_SAMPLES 65536
+#define MAX_SAMPLES 65536 // mas size
 
 Producer::Producer(QObject *parent) :
     QThread(parent)
@@ -26,23 +27,23 @@ Producer::Producer(QObject *parent) :
 void Producer::writeReset(int fd)
 {
         int ret;
-        uint8_t tx1[5] = {0xff,0xff,0xff,0xff,0xff};
-        uint8_t rx1[5] = {0};
-        struct spi_ioc_transfer tr;
-    tr.tx_buf = (unsigned long)tx1;
-    tr.rx_buf = (unsigned long)rx1;
-    tr.len = ARRAY_SIZE(tx1);
-    tr.delay_usecs = delay;
-    tr.speed_hz = speed;
-    tr.bits_per_word = bits;
+        uint8_t tx1[5] = {0xff,0xff,0xff,0xff,0xff}; // initialize
+        uint8_t rx1[5] = {0}; // initialize
+        struct spi_ioc_transfer tr; // storage structure
+    tr.tx_buf = (unsigned long)tx1; // store to tx
+    tr.rx_buf = (unsigned long)rx1; // store to rx
+    tr.len = ARRAY_SIZE(tx1); // length of buffer
+    tr.delay_usecs = delay; // delay
+    tr.speed_hz = speed; // speed 
+    tr.bits_per_word = bits; // number of bits
 
         ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
         if (ret < 1)
-                pabort("can't send spi message");
+                pabort("can't send spi message"); // error is no spi message can pass
 }
 
 
-void Producer::writeReg(int fd, uint8_t v)
+void Producer::writeReg(int fd, uint8_t v) // writing to the register
 {
   int ret;
   uint8_t tx1[1];
@@ -62,7 +63,7 @@ void Producer::writeReg(int fd, uint8_t v)
 
 }
 
-uint8_t Producer::readReg(int fd)
+uint8_t Producer::readReg(int fd) // reading from the resigster
 {
         int ret;
         uint8_t tx1[1];
@@ -83,7 +84,7 @@ uint8_t Producer::readReg(int fd)
         return rx1[0];
 }
 
-int Producer::readData(int fd)
+int Producer::readData(int fd) // reading the actual data
 {
         int ret;
         uint8_t tx1[2] = {0,0};
@@ -102,7 +103,7 @@ int Producer::readData(int fd)
         return (rx1[0]<<8)|(rx1[1]);
 }
 
-void Producer::initialise()
+void Producer::initialise() // initializing the ADC
 {
     int ret = 0;
 
@@ -184,11 +185,11 @@ void Producer::initialise()
     writeReg(fd,0x40);
 }
 
-void Producer::run()
+void Producer::run() // run the ADC
 {
         initialise();
 
-        qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
+        qsrand(QTime(0,0,0).secsTo(QTime::currentTime())); // reset time to 0
 
         running = true;
         fprintf(stderr,"We are running!\n");
@@ -198,7 +199,7 @@ void Producer::run()
         while (running) {
 
           // let's wait for data for max one second
-          int ret = gpio_poll(sysfs_fd,1000);
+          int ret = gpio_poll(sysfs_fd,1000); // poll data
           if (ret<1) {
             fprintf(stderr,"Poll error %d\n",ret);
           }
@@ -207,9 +208,9 @@ void Producer::run()
           // read the data register by performing two 8 bit reads
           Josh = readData(fd)-0x8000;
 
-          freeBytes.acquire();
-          buffer[i % BufferSize] = Josh;
-          usedBytes.release();
+          freeBytes.acquire(); // check for free space
+          buffer[i % BufferSize] = Josh; // store to buffer
+          usedBytes.release(); // release data
           if(i % 20 == 0)
           emit bufferFillCountChanged(usedBytes.available());
           emit producerCountChanged(i);
@@ -225,25 +226,13 @@ void Producer::run()
 
 }
 
-//int ::getSample()
-//{
-//  assert(pOut!=pIn);
-//  int value = *pOut;
-//  if (pOut == (&samples[MAX_SAMPLES-1]))
-//    pOut = samples;
-//  else
-//    pOut++;
-//  return value;
-//}
-
-
-int Producer::hasSample()
+int Producer::hasSample() // check if sample exists
 {
   return (pOut!=pIn);
 }
 
 
-void Producer::quit()
+void Producer::quit() // exit
 {
     running = false;
     exit(0);
